@@ -1,3 +1,6 @@
+//this authentication file is usefull for every project 
+//in this file all of methods are written as par documentation so go through with addwrite docs
+
 import { Client, Account, ID } from "appwrite";
 import conf from "../Config/config"
 
@@ -24,7 +27,7 @@ export class AuthService{
                 return userAccount
             }
         } catch (error) {
-            throw error;
+            console.log("Appwrite service :: createAccount :: error",error);
         }
      }
 
@@ -32,7 +35,7 @@ export class AuthService{
         try {
             return await this.account.createEmailPasswordSession(email,password)
         } catch (error) {
-            throw error;
+            console.log("Appwrite service :: login :: error",error);
         }
      }
 
@@ -40,7 +43,7 @@ export class AuthService{
         try {
             return await this.account.get()
         } catch (error) {
-            throw error; 
+            console.log("Appwrite service :: getCurrentUser :: error",error);
         }
      }
 
@@ -48,7 +51,7 @@ export class AuthService{
         try {
             return await this.account.deleteSessions(); //all sessions of user will be deleted
         } catch (error) {
-            throw error
+            console.log("Appwrite service :: logout :: error",error);
         }
      }
 }
