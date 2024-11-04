@@ -12,7 +12,7 @@ this is the blog page where user can read blogs and also they can upload too
 
 1.Appwrite : open source backend service 
 2.react-router : for routing
-3.react-redux: for state management
+3.react-redux: state management 
 4.html-react-parser
 5.react-hook-form
 6.tinymce
