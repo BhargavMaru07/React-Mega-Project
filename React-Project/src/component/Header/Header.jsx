@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import authService from "../../appwrite/Auth";
 
 function Header() {
-  const authStatus = useSelector((state) => state.status); //lec:- state.auth.status
+  const authStatus = useSelector((state) => state.auth.status); //lec:- state.auth.status
 
   const navigate = useNavigate();
 
