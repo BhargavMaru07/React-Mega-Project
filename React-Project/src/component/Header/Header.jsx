@@ -5,7 +5,6 @@ import Logo from "../Logo";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import authService from "../../appwrite/Auth";
 
 function Header() {
   const authStatus = useSelector((state) => state.auth.status); //lec:- state.auth.status
@@ -63,7 +62,7 @@ function Header() {
               ) : null
             )}
 
-            {authService && (
+            {authStatus && (
               <li>
                 <LogoutBtn />
               </li>
