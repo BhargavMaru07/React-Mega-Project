@@ -9,51 +9,62 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 function PostForm({ post }) {
-  const { register, handleSubmit, watch, setValue, control, getValues } =
-    useForm({
-      defaultValues: {
-        title: post?.title || "",
-        slug: post?.$id || "",
-        content: post?.content || "",
-        status: post?.status || "active",
-      },
-    });
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    control,
+    getValues,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      title: post?.title || "",
+      slug: post?.$id || "",
+      content: post?.content || "",
+      status: post?.status || "active",
+    },
+  });
 
   const navigate = useNavigate();
-  const userData = useSelector((state = state.auth.userData));
+  const userData = useSelector((state) => state.auth.userData);
 
   const submit = async (data) => {
-    if (post) {
-      const file = data.image[0]
-        ? await appwriteService.uploadFile(data.image[0])
-        : null;
+    console.log("submit data", data);
+      console.log("userData:", userData); // Log to check if userData is defined
 
-      if (file) {
-        appwriteService.deleteFile(post.featuredImage);
+      if (!userData) {
+        console.log("User is not logged in or userData is missing.");
+        return; // Stop execution if userData is not available
+      }
+      
+    try {
+      let file;
+      if (data.image && data.image[0]) {
+        file = await appwriteService.uploadFile(data.image[0]);
       }
 
-      const dbPost = await appwriteService.updatePost(post.$id, {
-        ...data,
-        featuredImage: file ? file.$id : undefined,
-      });
+      if (post) {
+        if (file) {
+          await appwriteService.deleteFile(post.featuredImage);
+          data.featuredImage = file.$id;
+        }
 
-      if (dbPost) {
-        navigate(`/post/${dbPost.$id}`);
-      }
-    } else {
-      const file = await appwriteService.uploadFile(data.image[0]);
+        const dbPost = await appwriteService.updatePost(post.$id, data);
+        if (dbPost) {
+          navigate(`/post/${dbPost.$id}`);
+        }
+      } else {
+        if (file) data.featuredImage = file.$id;
+        data.userId = userData.$id;
 
-      if (file) {
-        const fileId = file.$id;
-        data.featuredImage = fileId;
-        const dbPost = await appwriteService.createPost({
-          ...data,
-          userId: userData.$id,
-        });
+        const dbPost = await appwriteService.createPost(data);
         if (dbPost) {
           navigate(`/post/${dbPost.$id}`);
         }
       }
+    } catch (error) {
+      console.log("Error submitting post", error);
     }
   };
 
@@ -66,13 +77,10 @@ function PostForm({ post }) {
   React.useEffect(() => {
     const subscription = watch((value, { name }) => {
       if (name === "title") {
-        setValue("slug", slugTransform(value.title, { shouldValidate: true }));
+        setValue("slug", slugTransform(value.title), { shouldValidate: true });
       }
     });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, [watch, slugTransform, setValue]);
 
   return (
@@ -82,31 +90,31 @@ function PostForm({ post }) {
           label="Title:"
           placeholder="Title"
           className="mb-4"
-          {...register("title", {
-            required: true,
-          })}
+          {...register("title", { required: true })}
         />
+        {errors.title && <span>Title is required</span>}
+
         <Input
           label="Slug:"
           placeholder="Slug"
           className="mb-4"
-          {...register("slug", {
-            required: true,
-          })}
-          onInput={(e) => {
+          {...register("slug", { required: true })}
+          onInput={(e) =>
             setValue("slug", slugTransform(e.currentTarget.value), {
               shouldValidate: true,
-            });
-          }}
+            })
+          }
         />
+        {errors.slug && <span>Slug is required</span>}
 
         <RTE
           label="Content :"
-          name="Content"
+          name="content"
           control={control}
           defaultValue={getValues("content")}
         />
       </div>
+
       <div className="w-1/3 px-2">
         <Input
           label="Featured Image :"
@@ -115,7 +123,9 @@ function PostForm({ post }) {
           accept="image/png, image/jpg, image/jpeg, image/gif"
           {...register("image", { required: !post })}
         />
-        {post && (
+        {errors.image && <span>Image is required</span>}
+
+        {post && post.featuredImage && (
           <div className="w-full mb-4">
             <img
               src={appwriteService.getFilePreview(post.featuredImage)}
@@ -124,17 +134,18 @@ function PostForm({ post }) {
             />
           </div>
         )}
+
         <Select
           options={["active", "inactive"]}
           label="Status"
           className="mb-4"
-          {...register("status", {
-            required: true,
-          })}
+          {...register("status", { required: true })}
         />
+        {errors.status && <span>Status is required</span>}
+
         <Button
           type="submit"
-          bgColor={post ? "bg-green-500" : undefined}
+          bgColor={post ? "bg-green-500" : "bg-blue-600"}
           className="w-full"
         >
           {post ? "Update" : "Submit"}
